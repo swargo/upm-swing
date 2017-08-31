@@ -67,7 +67,7 @@ public class DatabaseActions {
 
     private MainWindow mainWindow;
     private PasswordDatabase database;
-    private ArrayList accountNames;
+    private ArrayList<String> accountNames;
     private boolean localDatabaseDirty = true;
     private PasswordDatabasePersistence dbPers;
     private FileMonitor fileMonitor;
@@ -88,51 +88,17 @@ public class DatabaseActions {
      * This method asks the user for the name of a new database and then creates
      * it. If the file already exists then the user is asked if they'd like to
      * overwrite it.
+     *
      * @throws CryptoException
      * @throws IOException
      */
     public void newDatabase() throws IOException, CryptoException {
 
-        File newDatabaseFile = getSaveAsFile(Translator.translate("newPasswordDatabase"));
-        if (newDatabaseFile == null) {
-            return;
-        }
 
-        final JPasswordField masterPassword = new JPasswordField("");
-        boolean passwordsMatch = false;
-        do {
-
-            //Get a new master password for this database from the user
-            JPasswordField confirmedMasterPassword = new JPasswordField("");
-            JOptionPane pane = new JOptionPane(new Object[] {Translator.translate("enterMasterPassword"), masterPassword, Translator.translate("confirmation"), confirmedMasterPassword}, JOptionPane.QUESTION_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
-            JDialog dialog = pane.createDialog(mainWindow, Translator.translate("masterPassword"));
-            dialog.addWindowFocusListener(new WindowAdapter() {
-                public void windowGainedFocus(WindowEvent e) {
-                    masterPassword.requestFocusInWindow();
-                }
-            });
-            dialog.show();
-
-            if (pane.getValue().equals(new Integer(JOptionPane.OK_OPTION))) {
-                if (!Arrays.equals(masterPassword.getPassword(), confirmedMasterPassword.getPassword())) {
-                    JOptionPane.showMessageDialog(mainWindow, Translator.translate("passwordsDontMatch"));
-                } else {
-                    passwordsMatch = true;
-                }
-            } else {
-                return;
-            }
-
-        } while (passwordsMatch == false);
-
-        if (newDatabaseFile.exists()) {
-            newDatabaseFile.delete();
-        }
-
-        database = new PasswordDatabase(newDatabaseFile);
-        dbPers = new PasswordDatabasePersistence(masterPassword.getPassword());
-        saveDatabase();
-        accountNames = new ArrayList();
+        database = new PasswordDatabase();
+        dbPers = new PasswordDatabasePersistence();
+//        saveDatabase();
+        accountNames = new ArrayList<>();
         doOpenDatabaseActions();
 
         // If a "Database to Load on Startup" hasn't been set yet then ask the
@@ -145,8 +111,7 @@ public class DatabaseActions {
                     JOptionPane.YES_NO_OPTION);
             if (option == JOptionPane.YES_OPTION) {
                 Preferences.set(
-                        Preferences.ApplicationOptions.DB_TO_LOAD_ON_STARTUP,
-                        newDatabaseFile.getAbsolutePath());
+                        Preferences.ApplicationOptions.DB_TO_LOAD_ON_STARTUP, "");
                 Preferences.save();
             }
         }
@@ -165,7 +130,7 @@ public class DatabaseActions {
                     okClicked = false;
                 } else {
                     try {
-                        dbPers.load(database.getDatabaseFile(), password);
+                        dbPers.load();
                         passwordCorrect = true;
                     } catch (InvalidPasswordException e) {
                         JOptionPane.showMessageDialog(mainWindow, Translator.translate("incorrectPassword"));
@@ -174,43 +139,43 @@ public class DatabaseActions {
             } while (!passwordCorrect && okClicked);
 
             //If the master password was entered correctly then the next step is to get the new master password
-            if (passwordCorrect == true) {
+            if (passwordCorrect) {
 
-                    final JPasswordField masterPassword = new JPasswordField("");
-                    boolean passwordsMatch = false;
-                    Object buttonClicked;
+                final JPasswordField masterPassword = new JPasswordField("");
+                boolean passwordsMatch = false;
+                Object buttonClicked;
 
-                    //Ask the user for the new master password
-                    //This loop will continue until the two passwords entered match or until the user hits the cancel button
-                    do {
+                //Ask the user for the new master password
+                //This loop will continue until the two passwords entered match or until the user hits the cancel button
+                do {
 
 
-                        JPasswordField confirmedMasterPassword = new JPasswordField("");
-                        JOptionPane pane = new JOptionPane(new Object[] {Translator.translate("enterNewMasterPassword"), masterPassword, Translator.translate("confirmation"), confirmedMasterPassword}, JOptionPane.QUESTION_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
-                        JDialog dialog = pane.createDialog(mainWindow, Translator.translate("changeMasterPassword"));
-                        dialog.addWindowFocusListener(new WindowAdapter() {
-                            public void windowGainedFocus(WindowEvent e) {
-                                masterPassword.requestFocusInWindow();
-                            }
-                        });
-                        dialog.show();
-
-                        buttonClicked = pane.getValue();
-                        if (buttonClicked.equals(new Integer(JOptionPane.OK_OPTION))) {
-                            if (!Arrays.equals(masterPassword.getPassword(), confirmedMasterPassword.getPassword())) {
-                                JOptionPane.showMessageDialog(mainWindow, Translator.translate("passwordsDontMatch"));
-                            } else {
-                                passwordsMatch = true;
-                            }
+                    JPasswordField confirmedMasterPassword = new JPasswordField("");
+                    JOptionPane pane = new JOptionPane(new Object[]{Translator.translate("enterNewMasterPassword"), masterPassword, Translator.translate("confirmation"), confirmedMasterPassword}, JOptionPane.QUESTION_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+                    JDialog dialog = pane.createDialog(mainWindow, Translator.translate("changeMasterPassword"));
+                    dialog.addWindowFocusListener(new WindowAdapter() {
+                        public void windowGainedFocus(WindowEvent e) {
+                            masterPassword.requestFocusInWindow();
                         }
+                    });
+                    dialog.show();
 
-                    } while (buttonClicked.equals(new Integer(JOptionPane.OK_OPTION)) && !passwordsMatch);
-
-                    //If the user clicked OK and the passwords match then change the database password
-                    if (buttonClicked.equals(new Integer(JOptionPane.OK_OPTION)) && passwordsMatch) {
-                        this.dbPers.getEncryptionService().initCipher(masterPassword.getPassword());
-                        saveDatabase();
+                    buttonClicked = pane.getValue();
+                    if (buttonClicked.equals(new Integer(JOptionPane.OK_OPTION))) {
+                        if (!Arrays.equals(masterPassword.getPassword(), confirmedMasterPassword.getPassword())) {
+                            JOptionPane.showMessageDialog(mainWindow, Translator.translate("passwordsDontMatch"));
+                        } else {
+                            passwordsMatch = true;
+                        }
                     }
+
+                } while (buttonClicked.equals(JOptionPane.OK_OPTION) && !passwordsMatch);
+
+                //If the user clicked OK and the passwords match then change the database password
+                if (buttonClicked.equals(JOptionPane.OK_OPTION) && passwordsMatch) {
+                    this.dbPers.getEncryptionService().initCipher(masterPassword.getPassword());
+                    saveDatabase();
+                }
 
             }
         }
@@ -218,7 +183,7 @@ public class DatabaseActions {
     }
 
 
-    public void errorHandler(Exception e) {
+    void errorHandler(Exception e) {
         e.printStackTrace();
         String errorMessage = e.getMessage();
         if (errorMessage == null) {
@@ -288,7 +253,7 @@ public class DatabaseActions {
                 mainWindow.setFileChangedPanelVisible(true);
             }
         };
-        fileMonitor = new FileMonitor(database.getDatabaseFile(), callback);
+//        fileMonitor = new FileMonitor(database.getDatabaseFile(), callback);
         Thread thread = new Thread(fileMonitor);
         thread.start();
 
@@ -308,10 +273,10 @@ public class DatabaseActions {
     private void configureAutoLock() {
         lockIfInactive = Preferences.get(
                 Preferences.ApplicationOptions.DATABASE_AUTO_LOCK, "false").
-                    equals("true");
+                equals("true");
         msToWaitBeforeClosingDB = Preferences.getInt(
                 Preferences.ApplicationOptions.DATABASE_AUTO_LOCK_TIME, 5)
-                    * 60 * 1000;
+                * 60 * 1000;
 
         if (lockIfInactive) {
             LOG.debug("Enabling autoclose when focus lost");
@@ -320,17 +285,17 @@ public class DatabaseActions {
             }
         } else {
             LOG.debug("Disabling autoclose when focus lost");
-            for (int i=0; i<mainWindow.getWindowFocusListeners().length; i++) {
+            for (int i = 0; i < mainWindow.getWindowFocusListeners().length; i++) {
                 mainWindow.removeWindowFocusListener(
                         mainWindow.getWindowFocusListeners()[i]);
             }
         }
     }
 
-    public ArrayList getAccountNames() {
+    public ArrayList<String> getAccountNames() {
         ArrayList dbAccounts = database.getAccounts();
-        ArrayList accountNames = new ArrayList();
-        for (int i=0; i<dbAccounts.size(); i++) {
+        ArrayList<String> accountNames = new ArrayList<>();
+        for (int i = 0; i < dbAccounts.size(); i++) {
             AccountInformation ai = (AccountInformation) dbAccounts.get(i);
             String accountName = (String) ai.getAccountName();
             accountNames.add(accountName);
@@ -339,16 +304,16 @@ public class DatabaseActions {
     }
 
 
-
     /**
      * Prompt the user to enter a password
+     *
      * @return The password entered by the user or null of this hit escape/cancel
      */
     private char[] askUserForPassword(String message) {
         char[] password = null;
 
         final JPasswordField masterPassword = new JPasswordField("");
-        JOptionPane pane = new JOptionPane(new Object[] {message, masterPassword }, JOptionPane.QUESTION_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+        JOptionPane pane = new JOptionPane(new Object[]{message, masterPassword}, JOptionPane.QUESTION_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
         JDialog dialog = pane.createDialog(mainWindow, Translator.translate("masterPassword"));
         dialog.addWindowFocusListener(new WindowAdapter() {
             public void windowGainedFocus(WindowEvent e) {
@@ -365,61 +330,21 @@ public class DatabaseActions {
     }
 
 
-    public void openDatabase(String databaseFilename) throws IOException, ProblemReadingDatabaseFile, CryptoException {
+    public void openDatabase(String databaseFilename) throws IOException, ProblemReadingDatabaseFile, CryptoException, InvalidPasswordException {
         openDatabase(databaseFilename, null);
     }
 
 
-    public void openDatabase(String databaseFilename, char[] password) throws IOException, ProblemReadingDatabaseFile, CryptoException {
-
-        boolean passwordCorrect = false;
-        boolean okClicked = true;
-        while (!passwordCorrect && okClicked) {
-            // If we weren't given a password then ask the user to enter one
-            if (password == null) {
-                password = askUserForPassword(Translator.translate("enterDatabasePassword"));
-                if (password == null) {
-                    okClicked = false;
-                }
-            } else {
-                okClicked = true;
-            }
-
-            if (okClicked) {
-                try {
-                    dbPers = new PasswordDatabasePersistence();
-                    database = dbPers.load(new File(databaseFilename), password);
-                    passwordCorrect = true;
-                } catch (InvalidPasswordException e) {
-                    JOptionPane.showMessageDialog(mainWindow, Translator.translate("incorrectPassword"));
-                    password = null;
-                }
-            }
-        }
-
-        if (passwordCorrect) {
-            doOpenDatabaseActions();
-        }
-
+    public void openDatabase(String databaseFilename, char[] password) throws IOException, ProblemReadingDatabaseFile, CryptoException, InvalidPasswordException {
+        dbPers = new PasswordDatabasePersistence();
+        database = dbPers.load();
     }
 
 
-    public void openDatabase() throws IOException, ProblemReadingDatabaseFile, CryptoException {
-        JFileChooser fc = new JFileChooser();
-        fc.setDialogTitle(Translator.translate("openDatabase"));
-        int returnVal = fc.showOpenDialog(mainWindow);
-
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            File databaseFile = fc.getSelectedFile();
-            if (databaseFile.exists()) {
-                openDatabase(databaseFile.getAbsolutePath());
-            } else {
-                JOptionPane.showMessageDialog(mainWindow, Translator.translate("fileDoesntExistWithName", databaseFile.getAbsolutePath()), Translator.translate("fileDoesntExist"), JOptionPane.ERROR_MESSAGE);
-            }
-        }
-
-        // Stop any "SetDBDirtyThread"s that are running
-        runSetDBDirtyThread = false;
+    public void openDatabase() throws IOException, ProblemReadingDatabaseFile, CryptoException, InvalidPasswordException {
+        dbPers = new PasswordDatabasePersistence();
+        database = dbPers.load();
+        doOpenDatabaseActions();
     }
 
 
@@ -482,7 +407,7 @@ public class DatabaseActions {
         boolean latestVersionDownloaded = false;
 
         // Ensure we're working with the latest version of the database
-        if (databaseHasRemoteInstance() && localDatabaseDirty) {
+        if (localDatabaseDirty) {
             int answer = JOptionPane.showConfirmDialog(mainWindow, Translator.translate("askSyncWithRemoteDB"), Translator.translate("syncDatabase"), JOptionPane.YES_NO_OPTION);
             if (answer == JOptionPane.YES_OPTION) {
                 latestVersionDownloaded = syncWithRemoteDatabase();
@@ -495,13 +420,13 @@ public class DatabaseActions {
     }
 
 
-    private boolean databaseHasRemoteInstance() {
-        if (database.getDbOptions().getRemoteLocation().equals("")) {
-            return false;
-        } else {
-            return true;
-        }
-    }
+//    private boolean databaseHasRemoteInstance() {
+//        if (database.getDbOptions().getRemoteLocation().equals("")) {
+//            return false;
+//        } else {
+//            return true;
+//        }
+//    }
 
 
     public void viewAccount() {
@@ -560,9 +485,9 @@ public class DatabaseActions {
     public void filter() {
         String filterStr = mainWindow.getSearchField().getText().toLowerCase();
 
-        ArrayList filteredAccountsList = new ArrayList();
-        for (int i=0; i<accountNames.size(); i++) {
-            String accountName = (String) accountNames.get(i);
+        ArrayList<String> filteredAccountsList = new ArrayList<String>();
+        for (int i = 0; i < accountNames.size(); i++) {
+            String accountName = accountNames.get(i);
             if (filterStr.equals("") || accountName.toLowerCase().indexOf(filterStr) != -1) {
                 filteredAccountsList.add(accountName);
             }
@@ -577,13 +502,13 @@ public class DatabaseActions {
     }
 
 
-    public void populateListview(ArrayList accountNames) {
+    public void populateListview(ArrayList<String> accountNames) {
         SortedListModel listview = (SortedListModel) mainWindow.getAccountsListview().getModel();
 
         listview.clear();
         mainWindow.getAccountsListview().clearSelection();
 
-        for (int i=0; i<accountNames.size(); i++) {
+        for (int i = 0; i < accountNames.size(); i++) {
             listview.addElement(accountNames.get(i));
         }
 
@@ -672,7 +597,7 @@ public class DatabaseActions {
     }
 
 
-    public void openDatabaseFromURL() throws TransportException, IOException, ProblemReadingDatabaseFile, CryptoException {
+    public void openDatabaseFromURL() throws TransportException, IOException, ProblemReadingDatabaseFile, CryptoException, InvalidPasswordException {
 
         // Ask the user for the remote database location
         OpenDatabaseFromURLDialog openDBDialog = new OpenDatabaseFromURLDialog(mainWindow);
@@ -711,39 +636,7 @@ public class DatabaseActions {
 
     }
 
-    public void reloadDatabase()
-            throws InvalidPasswordException, ProblemReadingDatabaseFile, IOException {
-        PasswordDatabase reloadedDb = null;
-        try {
-            reloadedDb = dbPers.load(database.getDatabaseFile());
-        } catch (InvalidPasswordException e) {
-            // The password for the reloaded database is different to that of
-            // the open database
-            boolean okClicked = false;
-            do {
-                char[] password = askUserForPassword(Translator.translate("enterDatabasePassword"));
-                if (password == null) {
-                    okClicked = false;
-                } else {
-                    okClicked = true;
-                    try {
-                        reloadedDb = dbPers.load(database.getDatabaseFile(), password);
-                    } catch (InvalidPasswordException invalidPassword) {
-                        JOptionPane.showMessageDialog(mainWindow, Translator.translate("incorrectPassword"));
-                    } catch (CryptoException e1) {
-                        errorHandler(e);
-                    }
-                }
-            } while (okClicked && reloadedDb == null);
-        }
-
-        if (reloadedDb != null) {
-            database = reloadedDb;
-            doOpenDatabaseActions();
-        }
-    }
-
-    public void reloadDatabaseBefore(ChangeDatabaseAction editAction)
+    void reloadDatabaseBefore(ChangeDatabaseAction editAction)
             throws InvalidPasswordException, ProblemReadingDatabaseFile,
             IOException {
         boolean proceedWithAction = false;
@@ -770,7 +663,7 @@ public class DatabaseActions {
 
         PasswordDatabase reloadedDb = null;
         try {
-            reloadedDb = dbPers.load(database.getDatabaseFile());
+            reloadedDb = dbPers.load();
         } catch (InvalidPasswordException e) {
             // The password for the reloaded database is different to that of
             // the open database
@@ -783,13 +676,10 @@ public class DatabaseActions {
                 } else {
                     okClicked = true;
                     try {
-                        reloadedDb = dbPers.load(database.getDatabaseFile(),
-                                password);
+                        reloadedDb = dbPers.load();
                     } catch (InvalidPasswordException invalidPassword) {
                         JOptionPane.showMessageDialog(mainWindow,
                                 Translator.translate("incorrectPassword"));
-                    } catch (CryptoException e1) {
-                        errorHandler(e);
                     }
                 }
             } while (okClicked && reloadedDb == null);
@@ -832,7 +722,7 @@ public class DatabaseActions {
             char[] password = null;
             boolean successfullyDecryptedDb = false;
             try {
-                remoteDatabase = dbPers.load(remoteDatabaseFile);
+                remoteDatabase = dbPers.load();
                 successfullyDecryptedDb = true;
             } catch (InvalidPasswordException e) {
                 // The password for the downloaded database is different to that of the open database
@@ -845,7 +735,7 @@ public class DatabaseActions {
                     } else {
                         okClicked = true;
                         try {
-                            remoteDatabase = dbPers.load(remoteDatabaseFile, password);
+                            remoteDatabase = dbPers.load();
                             successfullyDecryptedDb = true;
                         } catch (InvalidPasswordException invalidPassword) {
                             JOptionPane.showMessageDialog(mainWindow, Translator.translate("incorrectPassword"));
@@ -857,57 +747,6 @@ public class DatabaseActions {
             /* If the local database revision > remote database version => upload local database
                If the local database revision < remote database version => replace local database with remote database
                If the local database revision = remote database version => do nothing */
-            if (successfullyDecryptedDb) {
-                if (database.getRevision() > remoteDatabase.getRevision()) {
-                    transport.delete(remoteLocation, database.getDatabaseFile().getName(), httpUsername, httpPassword);
-                    transport.put(remoteLocation, database.getDatabaseFile(), httpUsername, httpPassword);
-                    syncSuccessful = true;
-                } else if (database.getRevision() < remoteDatabase.getRevision()) {
-                    Util.copyFile(remoteDatabaseFile, database.getDatabaseFile());
-                    database = new PasswordDatabase(
-                            remoteDatabase.getRevisionObj(),
-                            remoteDatabase.getDbOptions(),
-                            remoteDatabase.getAccountsHash(),
-                            database.getDatabaseFile());
-                    doOpenDatabaseActions();
-                    syncSuccessful = true;
-                } else {
-                    syncSuccessful = true;
-                }
-
-                if (syncSuccessful) {
-                    setLocalDatabaseDirty(false);
-
-                    // Create a thread that will mark the database dirty after
-                    // a short period. Without this the database would remain
-                    // in a synced state until the user makes a change. The
-                    // longer we wait before syncing up the greater chance there
-                    // is that we'll miss changes made elsewhere and end up
-                    // with a conflicting version of the database.
-                    final long dirtyThreadStartTime = System.currentTimeMillis();
-                    runSetDBDirtyThread = true;
-                    Thread setDBDirtyThread = new Thread(new Runnable() {
-                        public void run() {
-                            while (runSetDBDirtyThread) {
-                                try {
-                                    Thread.sleep(1000);
-                                } catch (InterruptedException e1) {}
-                                long currentTime = System.currentTimeMillis();
-                                if (currentTime - dirtyThreadStartTime > 5 * 60 * 1000) {
-                                    LOG.info("SetDBDirtyThread setting database dirty");
-                                    setLocalDatabaseDirty(true);
-                                    runSetDBDirtyThread = false;
-                                }
-                            }
-                        }
-                    });
-                    setDBDirtyThread.setName("SetDBDirty");
-                    setDBDirtyThread.start();
-                    LOG.info("Started SetDBDirtyThread thread");
-
-                }
-            }
-
         } finally {
             mainWindow.getContentPane().setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
             fileMonitor.start();
@@ -955,14 +794,14 @@ public class DatabaseActions {
                 // Unmarshall the accounts from the CSV file
                 try {
                     AccountsCSVMarshaller marshaller = new AccountsCSVMarshaller();
-                    ArrayList accountsInCSVFile = marshaller.unmarshal(csvFile);
-                    ArrayList accountsToImport = new ArrayList();
+                    ArrayList<AccountInformation> accountsInCSVFile = marshaller.unmarshal(csvFile);
+                    ArrayList<AccountInformation> accountsToImport = new ArrayList<>();
 
                     boolean importCancelled = false;
                     // Add each account to the open database. If the account
                     // already exits the prompt to overwrite
-                    for (int i=0; i<accountsInCSVFile.size(); i++) {
-                        AccountInformation importedAccount = (AccountInformation) accountsInCSVFile.get(i);
+                    for (int i = 0; i < accountsInCSVFile.size(); i++) {
+                        AccountInformation importedAccount = accountsInCSVFile.get(i);
                         if (database.getAccount(importedAccount.getAccountName()) != null) {
                             Object[] options = {"Overwrite Existing", "Keep Existing", "Cancel"};
                             int answer = JOptionPane.showOptionDialog(
@@ -987,8 +826,8 @@ public class DatabaseActions {
                     }
 
                     if (!importCancelled && accountsToImport.size() > 0) {
-                        for (int i=0; i<accountsToImport.size(); i++) {
-                            AccountInformation accountToImport = (AccountInformation) accountsToImport.get(i);
+                        for (int i = 0; i < accountsToImport.size(); i++) {
+                            AccountInformation accountToImport = accountsToImport.get(i);
                             database.deleteAccount(accountToImport.getAccountName());
                             database.addAccount(accountToImport);
                         }
@@ -1013,6 +852,7 @@ public class DatabaseActions {
      * This method prompts the user for the name of a file.
      * If the file exists then it will ask if they want to overwrite (the file isn't overwritten though,
      * that would be done by the calling method)
+     *
      * @param title The string title to put on the dialog
      * @return The file to save to or null
      */
@@ -1036,13 +876,13 @@ public class DatabaseActions {
                 Object[] options = {"Yes", "No"};
                 int i = JOptionPane.showOptionDialog(mainWindow,
                         Translator.translate("fileAlreadyExistsWithFileName", selectedFile.getAbsolutePath()) + '\n' +
-                            Translator.translate("overwrite"),
-                            Translator.translate("fileAlreadyExists"),
-                            JOptionPane.YES_NO_OPTION,
-                            JOptionPane.QUESTION_MESSAGE,
-                            null,
-                            options,
-                            options[1]);
+                                Translator.translate("overwrite"),
+                        Translator.translate("fileAlreadyExists"),
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.QUESTION_MESSAGE,
+                        null,
+                        options,
+                        options[1]);
                 if (i == JOptionPane.YES_OPTION) {
                     gotValidFile = true;
                 }
@@ -1061,29 +901,29 @@ public class DatabaseActions {
         if (fileMonitor != null) {
             fileMonitor.start();
         }
-        if (databaseHasRemoteInstance()) {
-            setLocalDatabaseDirty(true);
-        } else {
-            setLocalDatabaseDirty(false);
-        }
+        //if (databaseHasRemoteInstance()) {
+        setLocalDatabaseDirty(true);
+        //} else {
+        //  setLocalDatabaseDirty(false);
+        //}
     }
 
 
     private void setLocalDatabaseDirty(boolean dirty) {
         localDatabaseDirty = dirty;
 
-        if (databaseHasRemoteInstance()) {
-            if (localDatabaseDirty) {
-                mainWindow.getSyncWithRemoteDatabaseMenuItem().setEnabled(true);
-                mainWindow.getSyncWithRemoteDatabaseButton().setEnabled(true);
-            } else {
-                mainWindow.getSyncWithRemoteDatabaseMenuItem().setEnabled(false);
-                mainWindow.getSyncWithRemoteDatabaseButton().setEnabled(false);
-            }
+//        if (databaseHasRemoteInstance()) {
+        if (localDatabaseDirty) {
+            mainWindow.getSyncWithRemoteDatabaseMenuItem().setEnabled(true);
+            mainWindow.getSyncWithRemoteDatabaseButton().setEnabled(true);
         } else {
             mainWindow.getSyncWithRemoteDatabaseMenuItem().setEnabled(false);
             mainWindow.getSyncWithRemoteDatabaseButton().setEnabled(false);
         }
+//        } else {
+//            mainWindow.getSyncWithRemoteDatabaseMenuItem().setEnabled(false);
+//            mainWindow.getSyncWithRemoteDatabaseButton().setEnabled(false);
+//        }
 
         setStatusBarText();
     }
@@ -1092,19 +932,18 @@ public class DatabaseActions {
     private void setStatusBarText() {
         String status = null;
         Color color = null;
-        if (databaseHasRemoteInstance()) {
-            if (localDatabaseDirty) {
-                status = Translator.translate("unsynchronised");
-                color = Color.RED;
-            } else {
-                status = Translator.translate("synchronised");
-                color = Color.BLACK;
-            }
-            status = Translator.translate("revision") + ' ' + String.valueOf(database.getRevision()) + " - " + status;
+//        if (databaseHasRemoteInstance()) {
+        if (localDatabaseDirty) {
+            status = Translator.translate("unsynchronised");
+            color = Color.RED;
         } else {
-            status = Translator.translate("localDatabase");
+            status = Translator.translate("synchronised");
             color = Color.BLACK;
         }
+//        } else {
+//            status = Translator.translate("localDatabase");
+//            color = Color.BLACK;
+//        }
         mainWindow.getStatusBar().setText(status);
         mainWindow.getStatusBar().setForeground(color);
     }
@@ -1146,8 +985,8 @@ public class DatabaseActions {
                 return;
             }
 
-            if (database != null && closeDBTimer == null){
-                closeDBTimer = new Timer(msToWaitBeforeClosingDB , null);
+            if (database != null && closeDBTimer == null) {
+                closeDBTimer = new Timer(msToWaitBeforeClosingDB, null);
                 closeDBTimer.addActionListener(new ActionListener() {
                     public void actionPerformed(ActionEvent e) {
                         LOG.debug("Closing database due to inactivity");

@@ -32,24 +32,21 @@ import java.util.HashMap;
 public class PasswordDatabase {
 
     private File databaseFile;
-    private Revision revision;
     private DatabaseOptions dbOptions;
     private HashMap accounts;
 
     
-    public PasswordDatabase(Revision revision, DatabaseOptions dbOptions, HashMap accounts, File databaseFile) {
-        this.revision = revision;
+    public PasswordDatabase(HashMap accounts) {
         this.dbOptions = dbOptions;
         this.accounts = accounts;
-        this.databaseFile = databaseFile;
+//        this.databaseFile = databaseFile;
     }
 
 
-    public PasswordDatabase(File dbFile) {
-        this.revision = new Revision();
-        this.dbOptions = new DatabaseOptions();
+    public PasswordDatabase() {
+//        this.dbOptions = new DatabaseOptions();
         this.accounts = new HashMap();
-        this.databaseFile = dbFile;
+//        this.databaseFile = dbFile;
     }
     
 
@@ -85,16 +82,6 @@ public class PasswordDatabase {
 
     public DatabaseOptions getDbOptions() {
         return dbOptions;
-    }
-
-
-    public Revision getRevisionObj() {
-        return revision;
-    }
-
-       
-    public int getRevision() {
-        return revision.getRevision();
     }
 
 }

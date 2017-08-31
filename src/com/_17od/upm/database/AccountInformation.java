@@ -63,7 +63,7 @@ public class AccountInformation extends FlatPackObject {
         assemble(is, charset);
     }
     
-    
+    //
     public void flatPack(OutputStream os) throws IOException {
         os.write(flatPack(accountName));
         os.write(flatPack(userId));

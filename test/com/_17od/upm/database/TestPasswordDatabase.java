@@ -45,7 +45,7 @@ public class TestPasswordDatabase extends TestCase {
         //Make sure the file doesn't exist
         deleteFile(databaseFileName);
 
-        PasswordDatabase db = new PasswordDatabase(new File(databaseFileName));
+        PasswordDatabase db = new PasswordDatabase();
         PasswordDatabasePersistence pers = new PasswordDatabasePersistence(password);
         pers.save(db);
 
@@ -62,13 +62,13 @@ public class TestPasswordDatabase extends TestCase {
         deleteFile(databaseFileName);
         
         //Create the db on this line
-        PasswordDatabase db = new PasswordDatabase(new File(databaseFileName));
+        PasswordDatabase db = new PasswordDatabase();
         PasswordDatabasePersistence pers = new PasswordDatabasePersistence(password);
         pers.save(db);
         
         //Now try to open the db again
         PasswordDatabasePersistence dbPers = new PasswordDatabasePersistence();
-        dbPers.load(new File(databaseFileName), password);
+        dbPers.load();
     }
     
     
@@ -77,7 +77,7 @@ public class TestPasswordDatabase extends TestCase {
         deleteFile(databaseFileName);
         
         //Create the db
-        PasswordDatabase db = new PasswordDatabase(new File(databaseFileName));
+        PasswordDatabase db = new PasswordDatabase();
         
         //Add an account
         AccountInformation ai = new AccountInformation("Hotmail",
@@ -91,7 +91,7 @@ public class TestPasswordDatabase extends TestCase {
 
         //Load the db
         PasswordDatabasePersistence dbPers = new PasswordDatabasePersistence();
-        db = dbPers.load(new File(databaseFileName), password);
+        db = dbPers.load();
 
         //Check to ensure the account was loaded back in
         AccountInformation ai2 = db.getAccount("Hotmail");
@@ -108,7 +108,7 @@ public class TestPasswordDatabase extends TestCase {
         deleteFile(databaseFileName);
         
         //Create the db
-        PasswordDatabase db = new PasswordDatabase(new File(databaseFileName));
+        PasswordDatabase db = new PasswordDatabase();
         
         //Add an account
         AccountInformation ai = new AccountInformation("Hotmail",
@@ -127,14 +127,14 @@ public class TestPasswordDatabase extends TestCase {
         dbPers.save(db);
         
         //Load the db 
-        db = dbPers.load(new File(databaseFileName));
+        db = dbPers.load();
         
         //Delete an account
         db.deleteAccount("Yahoo Mail");
         dbPers.save(db);
 
         //Load the db again 
-        db = dbPers.load(new File(databaseFileName));
+        db = dbPers.load();
 
         //Check to ensure the Hotmail account still exists
         AccountInformation hotmailAccount = db.getAccount("Hotmail");

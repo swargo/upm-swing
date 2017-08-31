@@ -44,8 +44,7 @@ public abstract class FlatPackObject {
     /**
      * Write the given string to the given OutputStream
      * @param s
-     * @param os
-     * @throws UnsupportedEncodingException 
+     * @throws UnsupportedEncodingException
      */
     protected byte[] flatPack(String s) throws UnsupportedEncodingException {
         return flatPack(s.getBytes("UTF-8"));

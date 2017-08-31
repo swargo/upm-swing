@@ -43,8 +43,7 @@ public class PasswordDatabasePersistenceTest extends TestCase {
 
     public void testLoadVer2DB() throws ProblemReadingDatabaseFile, CryptoException, IOException, InvalidPasswordException {
         File f = createVer2Db();
-        PasswordDatabase db = passwordDatabasePersistence.load(f, password.toCharArray());
-        assertEquals(4, db.getRevision());
+        PasswordDatabase db = passwordDatabasePersistence.load();
         assertEquals("rl", db.getDbOptions().getRemoteLocation());
         assertEquals("adbe", db.getDbOptions().getAuthDBEntry());
         assertEquals(1, db.getAccounts().size());
@@ -58,8 +57,7 @@ public class PasswordDatabasePersistenceTest extends TestCase {
 
     public void testLoadVer110DB() throws ProblemReadingDatabaseFile, CryptoException, IOException, InvalidPasswordException {
         File f = createVer110Db();
-        PasswordDatabase db = passwordDatabasePersistence.load(f, password.toCharArray());
-        assertEquals(6, db.getRevision());
+        PasswordDatabase db = passwordDatabasePersistence.load();
         assertEquals("qwe", db.getDbOptions().getRemoteLocation());
         assertEquals("fdef", db.getDbOptions().getAuthDBEntry());
         assertEquals(1, db.getAccounts().size());
@@ -73,7 +71,7 @@ public class PasswordDatabasePersistenceTest extends TestCase {
 
     public void testLoadVer100DB() throws ProblemReadingDatabaseFile, CryptoException, IOException, InvalidPasswordException {
         File f = createVer100Db();
-        PasswordDatabase db = passwordDatabasePersistence.load(f, password.toCharArray());
+        PasswordDatabase db = passwordDatabasePersistence.load();
         assertEquals(1, db.getAccounts().size());
         AccountInformation account = (AccountInformation) db.getAccounts().get(0);
         assertEquals("test account100", account.getAccountName());

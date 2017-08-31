@@ -47,7 +47,7 @@ public class DESDecryptionService {
      * encryption algorithim pre 1.3
      * @param password
      * @param salt
-     * @param ciphertext
+     * @param cipherText
      * @return The decrypted bytes
      * @throws CryptoException 
      */

@@ -23,42 +23,40 @@ package com._17od.upm.database;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
 import com._17od.upm.util.Translator;
 import com.csvreader.CsvReader;
-import com.csvreader.CsvWriter;
 
 public class AccountsCSVMarshaller {
 
     public void marshal(ArrayList accounts, File file) throws ExportException {
 
-        if (file.exists()) {
-            throw new ExportException("The file to export to already exists");
-        }
+//        if (file.exists()) {
+//            throw new ExportException("The file to export to already exists");
+//        }
 
-        try {
-            FileWriter writer = new FileWriter(file);
+
+//            FileWriter writer = new FileWriter(file);
     
-            CsvWriter csvWriter = new CsvWriter(writer, ',');
+//            CsvWriter csvWriter = new CsvWriter(writer, ',');
             for (int i=0; i<accounts.size(); i++) {
-                csvWriter.writeRecord(
-                        getAccountAsStringArray(
-                                (AccountInformation) accounts.get(i)
-                        )
-                );
+                AccountInformation temp = (AccountInformation) accounts.get(i);
+
+//                csvWriter.writeRecord(
+//                        getAccountAsStringArray(
+//                                (AccountInformation) accounts.get(i)
+//                        )
+//                );
             }
-            csvWriter.close();
-        } catch (IOException e) {
-            throw new ExportException(e);
-        }
+//            csvWriter.close();
+
 
     }
 
-    public ArrayList unmarshal(File file) throws ImportException {
-        ArrayList accounts = new ArrayList();
+    public ArrayList<AccountInformation> unmarshal(File file) throws ImportException {
+        ArrayList<AccountInformation> accounts = new ArrayList<>();
 
         try {
             CsvReader csvReader = new CsvReader(new FileReader(file));
@@ -76,8 +74,6 @@ public class AccountsCSVMarshaller {
                         csvReader.get(3),
                         csvReader.get(4)));
             }
-        } catch (FileNotFoundException e) {
-            throw new ImportException(e);
         } catch (IOException e) {
             throw new ImportException(e);
         }
@@ -88,10 +84,10 @@ public class AccountsCSVMarshaller {
     private String[] getAccountAsStringArray(AccountInformation account) {
         String[] arr = new String[5];
         arr[0] = account.getAccountName();
-        arr[1] = new String(account.getUserId());
-        arr[2] = new String(account.getPassword());
-        arr[3] = new String(account.getUrl());
-        arr[4] = new String(account.getNotes());
+        arr[1] = account.getUserId();
+        arr[2] = account.getPassword();
+        arr[3] = account.getUrl();
+        arr[4] = account.getNotes();
         return arr;
     }
 
